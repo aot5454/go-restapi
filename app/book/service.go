@@ -9,7 +9,7 @@ type BookService interface {
 	CreateBook(BookRequest) error
 }
 
-func NewService(bookStorage BookStorage) BookService {
+func NewBookService(bookStorage BookStorage) BookService {
 	return &bookService{bookStorage: bookStorage}
 }
 
@@ -18,19 +18,18 @@ func (s *bookService) GetAllBook() ([]Book, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	var result []Book
-	for _, book := range books {
-		result = append(result, Book{
-			ID:     book.ID,
-			Title:  book.Title,
-			Author: book.Author,
-		})
-	}
-
+	result := s.mappingBookModelToBook(books)
 	return result, nil
 }
 
 func (s *bookService) CreateBook(book BookRequest) error {
 	return s.bookStorage.CreateBook(book)
+}
+
+func (s *bookService) mappingBookModelToBook(books []BookModel) []Book {
+	var result []Book
+	for _, book := range books {
+		result = append(result, Book(book))
+	}
+	return result
 }

@@ -33,7 +33,7 @@ func (m *bookStorageMockSuccess) CreateBook(book BookRequest) error {
 func TestBookServiceSuccessCase(t *testing.T) {
 	t.Run("GetAllBook: Should return array", func(t *testing.T) {
 		storage := &bookStorageMockSuccess{}
-		svc := NewService(storage)
+		svc := NewBookService(storage)
 
 		books, err := svc.GetAllBook()
 		if err != nil {
@@ -47,7 +47,7 @@ func TestBookServiceSuccessCase(t *testing.T) {
 
 	t.Run("CreateBook: Should return nil", func(t *testing.T) {
 		storage := &bookStorageMockSuccess{}
-		svc := NewService(storage)
+		svc := NewBookService(storage)
 
 		err := svc.CreateBook(BookRequest{})
 		if err != nil {
@@ -73,7 +73,7 @@ func (m *bookStorageMockError) CreateBook(book BookRequest) error {
 func TestBookServiceErrorsCase(t *testing.T) {
 	t.Run("GetAllBook: Should return error", func(t *testing.T) {
 		storage := &bookStorageMockError{}
-		svc := NewService(storage)
+		svc := NewBookService(storage)
 
 		_, err := svc.GetAllBook()
 		if err == nil {
@@ -83,7 +83,7 @@ func TestBookServiceErrorsCase(t *testing.T) {
 
 	t.Run("CreateBook: Should return error", func(t *testing.T) {
 		storage := &bookStorageMockError{}
-		svc := NewService(storage)
+		svc := NewBookService(storage)
 
 		err := svc.CreateBook(BookRequest{})
 		if err == nil {

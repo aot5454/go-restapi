@@ -11,20 +11,26 @@ import (
 
 	"go-restapi/app"
 	"go-restapi/app/book"
+	"go-restapi/database"
 	"go-restapi/logger"
 )
 
 func main() {
-	// db := database.NewSQLite()
-	// defer func() {
-	// 	_ = db.Close()
-	// }()
+
+	username := os.Getenv("DB_USERNAME")
+	password := os.Getenv("DB_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	databaseName := os.Getenv("DB_NAME")
+	db, err := database.NewMysqlDB(username, password, host, port, databaseName)
+	if err != nil {
+		panic(err)
+	}
 
 	logger := logger.New()
-
 	r := app.NewRouter(logger)
 
-	bookStorege := book.NewStorage()
+	bookStorege := book.NewBookStorage(db)
 	bookHandler := book.New(bookStorege)
 
 	r.GET("/books", bookHandler.GetAllBook)

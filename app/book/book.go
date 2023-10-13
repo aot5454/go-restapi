@@ -12,7 +12,13 @@ type BookRequest struct {
 }
 
 type BookModel struct {
-	ID     int64  `db:"id"`
+	ID     int64  `db:"id" gorm:"primaryKey" `
 	Title  string `db:"title"`
 	Author string `db:"author"`
+}
+
+var BookTableName = "books"
+
+func New(bookStorage BookStorage) BookHandler {
+	return NewHandler(NewBookService(bookStorage))
 }

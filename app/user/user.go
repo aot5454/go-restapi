@@ -9,6 +9,14 @@ type CreateUserRequest struct {
 	LastName  string `json:"lastname" validate:"required,min=3,max=50"`
 }
 
+type GetListUserResponse struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Status    string `json:"status"`
+}
+
 const UserTableName = "users"
 
 type UserModel struct {

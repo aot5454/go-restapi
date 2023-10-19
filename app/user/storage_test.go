@@ -19,6 +19,17 @@ var mockUserStorageData = UserModel{
 	Status:    1,
 }
 
+var mockUserStorageDataList = []UserModel{
+	{
+		ID: 1,
+		Username:  "test",
+		Password:  "password",
+		FirstName: "test",
+		LastName:  "test",
+		Status:    1,
+	},
+}
+
 type testSuite struct {
 	suite.Suite
 	sqlmockDB *sql.DB
@@ -58,6 +69,28 @@ func (s *testSuite) TestCreateUserStorage() {
 
 		storage := NewUserStorage(s.gormDB)
 		err := storage.CreateUser(s.data)
+		s.Error(err)
+	})
+}
+
+func (s *testSuite) TestGetListUserStorage() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
+					AddRow(1, "test", "password", "test", "test", 1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.GetListUser()
+		s.NoError(err)
+		s.EqualValues(mockUserStorageDataList, got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.GetListUser()
 		s.Error(err)
 	})
 }

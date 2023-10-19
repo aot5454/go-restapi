@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type UserStorage interface {
 	CreateUser(UserModel) error
+	GetListUser() ([]UserModel, error)
 }
 
 type userStorage struct {
@@ -20,4 +21,13 @@ func (s *userStorage) CreateUser(user UserModel) error {
 		return q.Error
 	}
 	return nil
+}
+
+func (s *userStorage) GetListUser() ([]UserModel, error) {
+	var users []UserModel
+	q := s.db.Debug().Table(UserTableName).Find(&users)
+	if q.Error != nil {
+		return nil, q.Error
+	}
+	return users, nil
 }

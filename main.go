@@ -43,6 +43,7 @@ func main() {
 		v1.POST("/books", bookHandler.CreateBook)
 
 		v1.POST("/users", userHandler.CreateUser)
+		v1.GET("/users", userHandler.GetListUser)
 	}
 
 	r.NoRoute()

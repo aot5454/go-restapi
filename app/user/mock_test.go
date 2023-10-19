@@ -15,6 +15,11 @@ func (m *mockUserService) CreateUser(ctx app.Context, req CreateUserRequest) err
 	return args.Error(0)
 }
 
+func (m *mockUserService) GetListUser(ctx app.Context) ([]GetListUserResponse, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]GetListUserResponse), args.Error(1)
+}
+
 // ----------------------------
 
 type mockUserStorage struct {
@@ -24,6 +29,11 @@ type mockUserStorage struct {
 func (m *mockUserStorage) CreateUser(model UserModel) error {
 	args := m.Called(model)
 	return args.Error(0)
+}
+
+func (m *mockUserStorage) GetListUser() ([]UserModel, error) {
+	args := m.Called()
+	return args.Get(0).([]UserModel), args.Error(1)
 }
 
 // ----------------------------

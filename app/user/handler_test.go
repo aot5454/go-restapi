@@ -70,6 +70,64 @@ func TestCreateUserHandler(t *testing.T) {
 	t.Run("Fail Case", RunTest(serviceFail, CreateUserFailCases))
 }
 
+// ----------------------------
+
+var GetListUserSuccessCasesEmptyData = []TestCases{
+	{
+		name:           "GetListUser: Should return success message (Empty data)",
+		url:            "/users",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 200,
+		expectedBody:   `{"status":"SUCCESS","message":"","data":[]}`,
+	},
+}
+
+var GetListUserSuccessCases = []TestCases{
+	{
+		name:           "GetListUser: Should return success message",
+		url:            "/users",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 200,
+		expectedBody:   `{"status":"SUCCESS","message":"","data":[{"id":0,"username":"test","firstname":"test","lastname":"test","status":"Active"}]}`,
+	},
+}
+
+var GetListUserFailCases = []TestCases{
+	{
+		name:           "GetListUser: Should return error (Service error)",
+		url:            "/users",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 507,
+		expectedBody:   `{"status":"ERROR","message":"The server encountered an unexpected condition which prevented it from fulfilling the request."}`,
+	},
+}
+
+func TestGetListUserHandler(t *testing.T) {
+	mockData := []GetListUserResponse{
+		{
+			ID:        0,
+			Username:  "test",
+			FirstName: "test",
+			LastName:  "test",
+			Status:    "Active",
+		},
+	}
+	serviceSuccess := &mockUserService{}
+	serviceSuccess.On("GetListUser", mock.Anything).Return(mockData, nil)
+	t.Run("Success Case", RunTest(serviceSuccess, GetListUserSuccessCases))
+
+	serviceSuccessEmptyData := &mockUserService{}
+	serviceSuccessEmptyData.On("GetListUser", mock.Anything).Return([]GetListUserResponse{}, nil)
+	t.Run("Success Case Empty data", RunTest(serviceSuccessEmptyData, GetListUserSuccessCasesEmptyData))
+
+	serviceFail := &mockUserService{}
+	serviceFail.On("GetListUser", mock.Anything).Return([]GetListUserResponse{}, errors.New("error"))
+	t.Run("Fail Case", RunTest(serviceFail, GetListUserFailCases))
+}
+
 func RunTest(service UserService, testCases []TestCases) func(t *testing.T) {
 	return func(t *testing.T) {
 		gin.SetMode(gin.TestMode)
@@ -77,6 +135,7 @@ func RunTest(service UserService, testCases []TestCases) func(t *testing.T) {
 
 		h := NewUserHandler(service)
 		r.POST("/users", toGinHandlerFunc(h.CreateUser))
+		r.GET("/users", toGinHandlerFunc(h.GetListUser))
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {

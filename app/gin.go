@@ -9,6 +9,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 type Context interface {
@@ -19,6 +20,9 @@ type Context interface {
 	StoreError(err error)
 	InternalServerError(err error)
 	Conflict(err error)
+	NotFound()
+	GetAllHeader() http.Header
+	GetHeader(string) string
 }
 
 type context struct {
@@ -56,6 +60,14 @@ func (c *context) Validate(v any) ([]ErrorField, error) {
 	return nil, nil
 }
 
+func (c *context) GetAllHeader() http.Header {
+	return c.Request.Header
+}
+
+func (c *context) GetHeader(key string) string {
+	return c.Context.GetHeader(key)
+}
+
 func (c *context) OK(v any) { // 200
 	c.Context.JSON(http.StatusOK, Response{
 		Status: Success,
@@ -68,6 +80,14 @@ func (c *context) BadRequest(err error) { // 400
 	c.Context.JSON(http.StatusBadRequest, Response{
 		Status:  Fail,
 		Message: BadRequestMsg,
+	})
+}
+
+func (c *context) NotFound() { // 404
+	// logger.AppErrorf(c.logHandler, "%s", err)
+	c.Context.JSON(http.StatusNotFound, Response{
+		Status:  Fail,
+		Message: NotFoundMsg,
 	})
 }
 
@@ -97,7 +117,12 @@ func (c *context) InternalServerError(err error) { // 500
 
 func NewGinHandler(handler func(Context), logger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		handler(NewContext(c, logger.Handler().WithAttrs([]slog.Attr{slog.String("transaction-id", c.Request.Header.Get("transaction-id"))})))
+		transationId := c.Request.Header.Get("transaction-id")
+		if transationId == "" {
+			transationId = uuid.NewString()
+			c.Request.Header.Set("transaction-id", transationId)
+		}
+		handler(NewContext(c, logger.Handler().WithAttrs([]slog.Attr{slog.String("transaction-id", transationId)})))
 		// handler(NewContext(c, logger.With(zap.String("transaction-id", c.Request.Header.Get("transaction-id")))))
 	}
 }
@@ -141,4 +166,41 @@ func (r *Router) PATCH(path string, handler func(Context)) {
 
 func (r *Router) DELETE(path string, handler func(Context)) {
 	r.Engine.DELETE(path, NewGinHandler(handler, r.logger))
+}
+
+func (r *Router) NoRoute() {
+	handler := func(c Context) { c.NotFound() }
+	r.Engine.NoRoute(NewGinHandler(handler, r.logger))
+}
+
+type RouterGroup struct {
+	*gin.RouterGroup
+	logger *slog.Logger
+}
+
+func (r *Router) Group(path string) *RouterGroup {
+	return &RouterGroup{
+		RouterGroup: r.Engine.Group(path),
+		logger:      r.logger,
+	}
+}
+
+func (rg *RouterGroup) GET(path string, handler func(Context)) {
+	rg.RouterGroup.GET(path, NewGinHandler(handler, rg.logger))
+}
+
+func (rg *RouterGroup) POST(path string, handler func(Context)) {
+	rg.RouterGroup.POST(path, NewGinHandler(handler, rg.logger))
+}
+
+func (rg *RouterGroup) PUT(path string, handler func(Context)) {
+	rg.RouterGroup.PUT(path, NewGinHandler(handler, rg.logger))
+}
+
+func (rg *RouterGroup) PATCH(path string, handler func(Context)) {
+	rg.RouterGroup.PATCH(path, NewGinHandler(handler, rg.logger))
+}
+
+func (rg *RouterGroup) DELETE(path string, handler func(Context)) {
+	rg.RouterGroup.DELETE(path, NewGinHandler(handler, rg.logger))
 }

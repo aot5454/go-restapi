@@ -21,7 +21,7 @@ var mockUserStorageData = UserModel{
 
 var mockUserStorageDataList = []UserModel{
 	{
-		ID: 1,
+		ID:        1,
 		Username:  "test",
 		Password:  "password",
 		FirstName: "test",
@@ -78,7 +78,7 @@ func (s *testSuite) TestGetListUserStorage() {
 		s.mock.ExpectQuery("SELECT").
 			WillReturnRows(sqlmock.
 				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
-					AddRow(1, "test", "password", "test", "test", 1))
+				AddRow(1, "test", "password", "test", "test", 1))
 
 		storage := NewUserStorage(s.gormDB)
 		got, err := storage.GetListUser()

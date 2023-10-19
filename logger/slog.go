@@ -24,7 +24,7 @@ func init() {
 }
 
 func New() *slog.Logger {
-	logLevel.Set(slog.LevelInfo)
+	logLevel.Set(slog.LevelDebug)
 
 	replace := func(groups []string, a slog.Attr) slog.Attr {
 		if a.Key == slog.SourceKey {
@@ -51,6 +51,30 @@ func New() *slog.Logger {
 	slog.SetDefault(logger)
 
 	return logger
+}
+
+func Debugf(format string, args ...any) {
+	if !logger.Enabled(context.Background(), slog.LevelDebug) {
+		return
+	}
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	r := slog.NewRecord(time.Now(), slog.LevelDebug, fmt.Sprintf(format, args...), pcs[0])
+	r.AddAttrs([]slog.Attr{
+		slog.Int("pid", pid),
+		slog.String("go_version", goversion),
+	}...)
+	_ = logger.Handler().Handle(context.Background(), r)
+}
+
+func Warnf(format string, args ...any) {
+	if !logger.Enabled(context.Background(), slog.LevelWarn) {
+		return
+	}
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	r := slog.NewRecord(time.Now(), slog.LevelWarn, fmt.Sprintf(format, args...), pcs[0])
+	_ = logger.Handler().Handle(context.Background(), r)
 }
 
 func Infof(format string, args ...any) {

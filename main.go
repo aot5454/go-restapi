@@ -11,6 +11,7 @@ import (
 
 	"go-restapi/app"
 	"go-restapi/app/book"
+	"go-restapi/app/user"
 	"go-restapi/database"
 	"go-restapi/logger"
 )
@@ -31,10 +32,20 @@ func main() {
 	r := app.NewRouter(logger)
 
 	bookStorege := book.NewBookStorage(db)
-	bookHandler := book.New(bookStorege)
+	userStorage := user.NewUserStorage(db)
 
-	r.GET("/books", bookHandler.GetAllBook)
-	r.POST("/books", bookHandler.CreateBook)
+	bookHandler := book.New(bookStorege)
+	userHandler := user.New(userStorage)
+
+	v1 := r.Group("/api/v1")
+	{
+		v1.GET("/books", bookHandler.GetAllBook)
+		v1.POST("/books", bookHandler.CreateBook)
+
+		v1.POST("/users", userHandler.CreateUser)
+	}
+
+	r.NoRoute()
 
 	srv := http.Server{
 		Addr:              ":" + os.Getenv("PORT"),

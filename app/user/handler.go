@@ -4,6 +4,7 @@ import "go-restapi/app"
 
 type UserHandler interface {
 	CreateUser(ctx app.Context)
+	GetListUser(ctx app.Context)
 }
 
 type userHandler struct {
@@ -35,4 +36,14 @@ func (h *userHandler) CreateUser(ctx app.Context) {
 	}
 
 	ctx.OK(nil)
+}
+
+func (h *userHandler) GetListUser(ctx app.Context) {
+	users, err := h.userSvc.GetListUser(ctx)
+	if err != nil {
+		ctx.StoreError(err)
+		return
+	}
+
+	ctx.OK(users)
 }

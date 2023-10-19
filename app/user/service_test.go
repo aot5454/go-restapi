@@ -15,8 +15,43 @@ var mockCreateUserRequest = CreateUserRequest{
 	LastName:  "test",
 }
 
-func TestCreateUserService(t *testing.T) {
+var mockGetListUserResponse = []GetListUserResponse{
+	{
+		ID:        1,
+		Username:  "test",
+		FirstName: "test",
+		LastName:  "test",
+		Status:    "Active",
+	},
+	{
+		ID:        2,
+		Username:  "test2",
+		FirstName: "test2",
+		LastName:  "test2",
+		Status:    "Inactive",
+	},
+}
 
+var mockUserModel = []UserModel{
+	{
+		ID:        1,
+		Username:  "test",
+		Password:  "password",
+		FirstName: "test",
+		LastName:  "test",
+		Status:    1,
+	},
+	{
+		ID:        2,
+		Username:  "test2",
+		Password:  "password2",
+		FirstName: "test2",
+		LastName:  "test2",
+		Status:    0,
+	},
+}
+
+func TestCreateUserService(t *testing.T) {
 	t.Run("Should return success", func(t *testing.T) {
 		storage := &mockUserStorage{}
 		storage.On("CreateUser", mock.Anything).Return(nil)
@@ -40,5 +75,30 @@ func TestCreateUserService(t *testing.T) {
 		err := service.CreateUser(nil, mockCreateUserRequest)
 		assert.Error(t, err)
 	})
+}
 
+func TestGetListUserService(t *testing.T) {
+	t.Run("Should return success", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetListUser").Return(mockUserModel, nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		got, err := service.GetListUser(nil)
+		assert.NoError(t, err)
+		assert.Equal(t, len(mockUserModel), len(got))
+		assert.EqualValues(t, mockGetListUserResponse, got)
+	})
+
+	t.Run("Should return error", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetListUser").Return([]UserModel{}, errors.New("error"))
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		_, err := service.GetListUser(nil)
+		assert.Error(t, err)
+	})
 }

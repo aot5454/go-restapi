@@ -52,6 +52,22 @@ var mockUserModel = []UserModel{
 	},
 }
 
+var mockGetUserResponse = GetUserResponse{
+	ID:        1,
+	Username:  "test",
+	FirstName: "test",
+	LastName:  "test",
+	Status:    "Active",
+}
+
+var mockGetUserResponse2 = GetUserResponse{
+	ID:        2,
+	Username:  "test2",
+	FirstName: "test2",
+	LastName:  "test2",
+	Status:    "Inactive",
+}
+
 func TestCreateUserService(t *testing.T) {
 	t.Run("Should return success", func(tc *testing.T) {
 		storage := &mockUserStorage{}
@@ -151,6 +167,54 @@ func TestCountListUserService(t *testing.T) {
 		service := NewUserService(storage, utils)
 
 		_, err := service.CountListUser(nil)
+		assert.Error(t, err)
+	})
+}
+
+func TestGetUserByIDService(t *testing.T) {
+	t.Run("Should return success (Active)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		got, err := service.GetUserByID(nil, 1)
+		assert.NoError(t, err)
+		assert.EqualValues(t, &mockGetUserResponse, got)
+	})
+
+	t.Run("Should return success (Inactive)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[1], nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		got, err := service.GetUserByID(nil, 1)
+		assert.NoError(t, err)
+		assert.EqualValues(t, &mockGetUserResponse2, got)
+	})
+
+	t.Run("Should return error (Not found)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], gorm.ErrRecordNotFound)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		_, err := service.GetUserByID(nil, 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("Should return error", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], errors.New("error"))
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		_, err := service.GetUserByID(nil, 1)
 		assert.Error(t, err)
 	})
 }

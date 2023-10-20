@@ -11,6 +11,7 @@ import (
 type UserService interface {
 	CreateUser(app.Context, CreateUserRequest) error
 	GetListUser(app.Context, int, int) ([]GetListUserResponse, error)
+	GetUserByID(app.Context, int) (*GetUserResponse, error)
 	CountListUser(app.Context) (int, error)
 }
 
@@ -75,6 +76,29 @@ func (s *userService) GetListUser(ctx app.Context, page int, pageSize int) ([]Ge
 		})
 	}
 	return res, nil
+}
+
+func (s *userService) GetUserByID(ctx app.Context, id int) (*GetUserResponse, error) {
+	user, err := s.userStorage.GetUserByID(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	status := "Active"
+	if user.Status == 0 {
+		status = "Inactive"
+	}
+	res := GetUserResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Status:    status,
+	}
+	return &res, nil
 }
 
 func (s *userService) CountListUser(ctx app.Context) (int, error) {

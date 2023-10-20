@@ -51,6 +51,10 @@ func (s *testStorageSuite) SetupTest() {
 	s.data = mockUserStorageData
 }
 
+func (s *testStorageSuite) TearDownTest() {
+	s.sqlmockDB.Close()
+}
+
 func (s *testStorageSuite) TestCreateUserStorage() {
 	s.Run("Should return nil", func() {
 		s.mock.ExpectBegin()
@@ -139,8 +143,26 @@ func (s *testStorageSuite) TestGetUserByUsername() {
 	})
 }
 
-func (s *testStorageSuite) TearDownTest() {
-	s.sqlmockDB.Close()
+func (s *testStorageSuite) TestGetUserByID() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
+				AddRow(1, "test", "password", "test", "test", 1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.GetUserByID(1)
+		s.NoError(err)
+		s.EqualValues(mockUserStorageData, *got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.GetUserByID(1)
+		s.Error(err)
+	})
 }
 
 func TestUserStorage(t *testing.T) {

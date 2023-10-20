@@ -6,6 +6,7 @@ type UserStorage interface {
 	CreateUser(UserModel) error
 	GetListUser(int, int) ([]UserModel, error)
 	GetUserByUsername(string) (*UserModel, error)
+	GetUserByID(int) (*UserModel, error)
 	CountListUser() (int64, error)
 }
 
@@ -46,6 +47,15 @@ func (s *userStorage) CountListUser() (int64, error) {
 func (s *userStorage) GetUserByUsername(username string) (*UserModel, error) {
 	var user UserModel
 	q := s.db.Debug().Table(UserTableName).Where("username = ?", username).First(&user)
+	if q.Error != nil {
+		return nil, q.Error
+	}
+	return &user, nil
+}
+
+func (s *userStorage) GetUserByID(id int) (*UserModel, error) {
+	var user UserModel
+	q := s.db.Debug().Table(UserTableName).Where("id = ?", id).First(&user)
 	if q.Error != nil {
 		return nil, q.Error
 	}

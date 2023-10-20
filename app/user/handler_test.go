@@ -199,6 +199,84 @@ func RunGetListUserFailCaseCountListUser(t *testing.T) {
 	t.Run("Fail Case CountListUser", RunTest(serviceFail, mockUtils, GetCountListUserFailCases))
 }
 
+// ----------------------------
+
+var GetUserByIDSuccessCases = []TestCases{
+	{
+		name:           "GetUserByID: Should return success message",
+		url:            "/users/0",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 200,
+		expectedBody:   `{"status":"SUCCESS","message":"","data":{"id":0,"username":"test","firstname":"test","lastname":"test","status":"Active"}}`,
+	},
+}
+
+var GetUserByIDFailCases = []TestCases{
+	{
+		name:           "GetUserByID: Should return error (ID invalid)",
+		url:            "/users/abc",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+	{
+		name:           "GetUserByID: Should return error (Service error)",
+		url:            "/users/0",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 507,
+		expectedBody:   `{"status":"ERROR","message":"The server encountered an unexpected condition which prevented it from fulfilling the request."}`,
+	},
+}
+
+var GetUserByIDNotFoundCases = []TestCases{
+	{
+		name:           "GetUserByID: Should return error (Service error Not found)",
+		url:            "/users/0",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 404,
+		expectedBody:   `{"status":"ERROR","message":"The requested resource could not be found but may be available in the future."}`,
+	},
+}
+
+func TestGetUserByIDHandler(t *testing.T) {
+	RunGetUserByIDHandlerSuccessCase(t)
+	RunGetUserByIDHandlerFailCase(t)
+	RunGetUserByIDHandlerNotFoundCase(t)
+}
+
+func RunGetUserByIDHandlerSuccessCase(t *testing.T) {
+	mockData := &GetUserResponse{
+		ID:        0,
+		Username:  "test",
+		FirstName: "test",
+		LastName:  "test",
+		Status:    "Active",
+	}
+
+	mockUtils := &mockUtils{}
+	serviceSuccess := &mockUserService{}
+	serviceSuccess.On("GetUserByID", mock.Anything, 0).Return(mockData, nil)
+	t.Run("Success Case", RunTest(serviceSuccess, mockUtils, GetUserByIDSuccessCases))
+}
+
+func RunGetUserByIDHandlerFailCase(t *testing.T) {
+	mockUtils := &mockUtils{}
+	serviceFail := &mockUserService{}
+	serviceFail.On("GetUserByID", mock.Anything, 0).Return(nil, errors.New("error"))
+	t.Run("Fail Case", RunTest(serviceFail, mockUtils, GetUserByIDFailCases))
+}
+
+func RunGetUserByIDHandlerNotFoundCase(t *testing.T) {
+	mockUtils := &mockUtils{}
+	serviceFail := &mockUserService{}
+	serviceFail.On("GetUserByID", mock.Anything, 0).Return(nil, ErrUserNotFound)
+	t.Run("Fail Case Not found", RunTest(serviceFail, mockUtils, GetUserByIDNotFoundCases))
+}
+
 func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func(t *testing.T) {
 	return func(t *testing.T) {
 		gin.SetMode(gin.TestMode)
@@ -207,6 +285,7 @@ func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func
 		h := NewUserHandler(service, utils)
 		r.POST("/users", toGinHandlerFunc(h.CreateUser))
 		r.GET("/users", toGinHandlerFunc(h.GetListUser))
+		r.GET("/users/:id", toGinHandlerFunc(h.GetUserByID))
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {

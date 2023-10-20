@@ -3,11 +3,13 @@ package user
 import (
 	"go-restapi/app"
 	"go-restapi/utils"
+	"strconv"
 )
 
 type UserHandler interface {
 	CreateUser(ctx app.Context)
 	GetListUser(ctx app.Context)
+	GetUserByID(ctx app.Context)
 }
 
 type userHandler struct {
@@ -72,4 +74,25 @@ func (h *userHandler) GetListUser(ctx app.Context) {
 	}
 
 	ctx.OKWithPaging(users, paging)
+}
+
+func (h *userHandler) GetUserByID(ctx app.Context) {
+	paramId := ctx.GetParam("id")
+	id, err := strconv.Atoi(paramId)
+	if err != nil {
+		ctx.BadRequest(err)
+		return
+	}
+
+	user, err := h.userSvc.GetUserByID(ctx, id)
+	if err != nil {
+		if err == ErrUserNotFound {
+			ctx.NotFound()
+			return
+		}
+		ctx.StoreError(err)
+		return
+	}
+
+	ctx.OK(user)
 }

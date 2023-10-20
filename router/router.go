@@ -22,6 +22,7 @@ func Router(r *app.Router, db *gorm.DB) *app.Router {
 
 		v1.POST("/users", userHandler.CreateUser)
 		v1.GET("/users", userHandler.GetListUser)
+		v1.GET("/users/:id", userHandler.GetUserByID)
 	}
 
 	r.NoRoute()

@@ -20,6 +20,14 @@ type GetListUserResponse struct {
 	Status    string `json:"status"`
 }
 
+type GetUserResponse struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Status    string `json:"status"`
+}
+
 const UserTableName = "users"
 
 type UserModel struct {
@@ -32,6 +40,7 @@ type UserModel struct {
 }
 
 var ErrUsernameAlreadyExists = errors.New("username already exists")
+var ErrUserNotFound = errors.New("user not found")
 
 func New(userStorage UserStorage) UserHandler {
 	service := NewUserService(userStorage, utils.NewUtils())

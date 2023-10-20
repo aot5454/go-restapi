@@ -25,6 +25,14 @@ func (m *mockUserService) CountListUser(ctx app.Context) (int, error) {
 	return args.Int(0), args.Error(1)
 }
 
+func (m *mockUserService) GetUserByID(ctx app.Context, id int) (*GetUserResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*GetUserResponse), args.Error(1)
+}
+
 // ----------------------------
 
 type mockUserStorage struct {
@@ -43,6 +51,14 @@ func (m *mockUserStorage) GetListUser(page, pageSize int) ([]UserModel, error) {
 
 func (m *mockUserStorage) GetUserByUsername(username string) (*UserModel, error) {
 	args := m.Called(username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*UserModel), args.Error(1)
+}
+
+func (m *mockUserStorage) GetUserByID(id int) (*UserModel, error) {
+	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

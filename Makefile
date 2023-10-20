@@ -1,8 +1,11 @@
 run:
-	ENV=local PORT=8080 DB_USERNAME=root DB_PASSWORD=password DB_HOST=localhost DB_PORT=3306 DB_NAME=restapi go run main.go
+	ENV=local go run main.go
 
 run-dev:
-	ENV=dev PORT=8080 DB_USERNAME=root DB_PASSWORD=password DB_HOST=localhost DB_PORT=3306 DB_NAME=restapi go run main.go
+	ENV=dev go run main.go
+
+run-prod:
+	ENV=production go run main.go
 
 test:
 	go test --cover ./...

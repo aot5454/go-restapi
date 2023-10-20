@@ -40,3 +40,21 @@ type Error Response
 func (err *Error) Error() string {
 	return err.Message
 }
+
+type Config struct {
+	Env      string   `mapstructure:"env"`
+	Server   Server   `mapstructure:"server"`
+	Database Database `mapstructure:"db"`
+}
+
+type Server struct {
+	Port string `mapstructure:"port"`
+}
+
+type Database struct {
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"host"`
+	Port     string `mapstructure:"port"`
+	Database string `mapstructure:"database"`
+}

@@ -151,7 +151,10 @@ type Router struct {
 	logger *slog.Logger
 }
 
-func NewRouter(logger *slog.Logger) *Router {
+func NewRouter(logger *slog.Logger, conf Config) *Router {
+	if conf.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	r := gin.Default()
 
 	config := cors.Config{

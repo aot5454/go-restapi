@@ -10,46 +10,29 @@ import (
 	"time"
 
 	"go-restapi/app"
-	"go-restapi/app/book"
-	"go-restapi/app/user"
+	"go-restapi/config"
 	"go-restapi/database"
 	"go-restapi/logger"
+	"go-restapi/router"
 )
 
 func main() {
+	conf, err := config.GetConfig()
+	if err != nil {
+		panic(err)
+	}
 
-	username := os.Getenv("DB_USERNAME")
-	password := os.Getenv("DB_PASSWORD")
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	databaseName := os.Getenv("DB_NAME")
-	db, err := database.NewMysqlDB(username, password, host, port, databaseName)
+	db, err := database.NewMysqlDB(conf)
 	if err != nil {
 		panic(err)
 	}
 
 	logger := logger.New()
-	r := app.NewRouter(logger)
-
-	bookStorege := book.NewBookStorage(db)
-	userStorage := user.NewUserStorage(db)
-
-	bookHandler := book.New(bookStorege)
-	userHandler := user.New(userStorage)
-
-	v1 := r.Group("/api/v1")
-	{
-		v1.GET("/books", bookHandler.GetAllBook)
-		v1.POST("/books", bookHandler.CreateBook)
-
-		v1.POST("/users", userHandler.CreateUser)
-		v1.GET("/users", userHandler.GetListUser)
-	}
-
-	r.NoRoute()
+	r := app.NewRouter(logger, conf)
+	r = router.Router(r, db)
 
 	srv := http.Server{
-		Addr:              ":" + os.Getenv("PORT"),
+		Addr:              ":" + conf.Server.Port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
@@ -69,6 +52,10 @@ func main() {
 		if err := srv.Shutdown(ctx); err != nil {
 			// Error from closing listeners, or context timeout:
 			logger.Info("HTTP server Shutdown: " + err.Error())
+		}
+		sqlDB, _ := db.DB()
+		if err := sqlDB.Close(); err != nil {
+			logger.Info("Database close: " + err.Error())
 		}
 		close(idleConnsClosed)
 	}()

@@ -81,7 +81,7 @@ func (s *testStorageSuite) TestGetListUserStorage() {
 				AddRow(1, "test", "password", "test", "test", 1))
 
 		storage := NewUserStorage(s.gormDB)
-		got, err := storage.GetListUser()
+		got, err := storage.GetListUser(1, 10)
 		s.NoError(err)
 		s.EqualValues(mockUserStorageDataList, got)
 	})
@@ -90,7 +90,29 @@ func (s *testStorageSuite) TestGetListUserStorage() {
 		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
 
 		storage := NewUserStorage(s.gormDB)
-		_, err := storage.GetListUser()
+		_, err := storage.GetListUser(1, 10)
+		s.Error(err)
+	})
+}
+
+func (s *testStorageSuite) TestCountListUserStorage() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"count"}).
+				AddRow(1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.CountListUser()
+		s.NoError(err)
+		s.EqualValues(1, got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.CountListUser()
 		s.Error(err)
 	})
 }

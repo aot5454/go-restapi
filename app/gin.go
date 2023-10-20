@@ -13,9 +13,10 @@ import (
 )
 
 type Context interface {
-	Bind(v any) error
-	Validate(v any) ([]ErrorField, error)
-	OK(v any)
+	Bind(any) error
+	Validate(any) ([]ErrorField, error)
+	OK(any)
+	OKWithPaging(any, Paging)
 	BadRequest(err error)
 	StoreError(err error)
 	InternalServerError(err error)
@@ -23,6 +24,8 @@ type Context interface {
 	NotFound()
 	GetAllHeader() http.Header
 	GetHeader(string) string
+	GetQuery(string) string
+	GetParam(string) string
 }
 
 type context struct {
@@ -60,6 +63,14 @@ func (c *context) Validate(v any) ([]ErrorField, error) {
 	return nil, nil
 }
 
+func (c *context) GetQuery(key string) string {
+	return c.Context.Query(key)
+}
+
+func (c *context) GetParam(key string) string {
+	return c.Context.Param(key)
+}
+
 func (c *context) GetAllHeader() http.Header {
 	return c.Request.Header
 }
@@ -68,10 +79,18 @@ func (c *context) GetHeader(key string) string {
 	return c.Context.GetHeader(key)
 }
 
-func (c *context) OK(v any) { // 200
+func (c *context) OK(data any) { // 200
 	c.Context.JSON(http.StatusOK, Response{
 		Status: Success,
-		Data:   v,
+		Data:   data,
+	})
+}
+
+func (c *context) OKWithPaging(data any, paging Paging) { // 200
+	c.Context.JSON(http.StatusOK, Response{
+		Status: Success,
+		Paging: paging,
+		Data:   data,
 	})
 }
 

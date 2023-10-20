@@ -10,7 +10,8 @@ import (
 
 type UserService interface {
 	CreateUser(app.Context, CreateUserRequest) error
-	GetListUser(app.Context) ([]GetListUserResponse, error)
+	GetListUser(app.Context, int, int) ([]GetListUserResponse, error)
+	CountListUser(app.Context) (int, error)
 }
 
 type userService struct {
@@ -51,8 +52,10 @@ func (s *userService) CreateUser(ctx app.Context, req CreateUserRequest) error {
 	return s.userStorage.CreateUser(user)
 }
 
-func (s *userService) GetListUser(ctx app.Context) ([]GetListUserResponse, error) {
-	users, err := s.userStorage.GetListUser()
+func (s *userService) GetListUser(ctx app.Context, page int, pageSize int) ([]GetListUserResponse, error) {
+	limit := pageSize
+	offset := (page - 1) * pageSize
+	users, err := s.userStorage.GetListUser(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -72,4 +75,12 @@ func (s *userService) GetListUser(ctx app.Context) ([]GetListUserResponse, error
 		})
 	}
 	return res, nil
+}
+
+func (s *userService) CountListUser(ctx app.Context) (int, error) {
+	count, err := s.userStorage.CountListUser()
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
 }

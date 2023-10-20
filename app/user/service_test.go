@@ -107,12 +107,12 @@ func TestCreateUserService(t *testing.T) {
 func TestGetListUserService(t *testing.T) {
 	t.Run("Should return success", func(t *testing.T) {
 		storage := &mockUserStorage{}
-		storage.On("GetListUser").Return(mockUserModel, nil)
+		storage.On("GetListUser", mock.Anything, mock.Anything).Return(mockUserModel, nil)
 		utils := &mockUtils{}
 
 		service := NewUserService(storage, utils)
 
-		got, err := service.GetListUser(nil)
+		got, err := service.GetListUser(nil, 1, 10)
 		assert.NoError(t, err)
 		assert.Equal(t, len(mockUserModel), len(got))
 		assert.EqualValues(t, mockGetListUserResponse, got)
@@ -120,12 +120,37 @@ func TestGetListUserService(t *testing.T) {
 
 	t.Run("Should return error", func(t *testing.T) {
 		storage := &mockUserStorage{}
-		storage.On("GetListUser").Return([]UserModel{}, errors.New("error"))
+		storage.On("GetListUser", mock.Anything, mock.Anything).Return([]UserModel{}, errors.New("error"))
 		utils := &mockUtils{}
 
 		service := NewUserService(storage, utils)
 
-		_, err := service.GetListUser(nil)
+		_, err := service.GetListUser(nil, 1, 10)
+		assert.Error(t, err)
+	})
+}
+
+func TestCountListUserService(t *testing.T) {
+	t.Run("Should return success", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("CountListUser").Return(int64(1), nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		got, err := service.CountListUser(nil)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, got)
+	})
+
+	t.Run("Should return error", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("CountListUser").Return(int64(0), errors.New("error"))
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		_, err := service.CountListUser(nil)
 		assert.Error(t, err)
 	})
 }

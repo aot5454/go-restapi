@@ -1,6 +1,9 @@
 package user
 
-import "go-restapi/app"
+import (
+	"go-restapi/app"
+	"go-restapi/utils"
+)
 
 type UserHandler interface {
 	CreateUser(ctx app.Context)
@@ -9,11 +12,13 @@ type UserHandler interface {
 
 type userHandler struct {
 	userSvc UserService
+	utils   utils.Utils
 }
 
-func NewUserHandler(userService UserService) UserHandler {
+func NewUserHandler(userService UserService, utils utils.Utils) UserHandler {
 	return &userHandler{
 		userSvc: userService,
+		utils:   utils,
 	}
 }
 
@@ -44,11 +49,27 @@ func (h *userHandler) CreateUser(ctx app.Context) {
 }
 
 func (h *userHandler) GetListUser(ctx app.Context) {
-	users, err := h.userSvc.GetListUser(ctx)
+	page, err := h.utils.GetPage(ctx)
+	pageSize, err := h.utils.GetPageSize(ctx)
+
+	users, err := h.userSvc.GetListUser(ctx, page, pageSize)
 	if err != nil {
 		ctx.StoreError(err)
 		return
 	}
 
-	ctx.OK(users)
+	totalRecord, err := h.userSvc.CountListUser(ctx)
+	if err != nil {
+		ctx.StoreError(err)
+		return
+	}
+
+	paging := app.Paging{
+		CurrentRecord: len(users),
+		CurrentPage:   page,
+		TotalRecord:   totalRecord,
+		TotalPage:     h.utils.GetTotalPage(totalRecord, pageSize),
+	}
+
+	ctx.OKWithPaging(users, paging)
 }

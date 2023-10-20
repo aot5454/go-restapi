@@ -18,7 +18,15 @@ const (
 type Response struct {
 	Status  status `json:"status"`
 	Message string `json:"message"`
+	Paging
 	Data    any    `json:"data,omitempty"`
+}
+
+type Paging struct {
+	CurrentRecord int `json:"currentRecord,omitempty"`
+	CurrentPage   int `json:"currentPage,omitempty"`
+	TotalRecord   int `json:"totalRecord,omitempty"`
+	TotalPage     int `json:"totalPage,omitempty"`
 }
 
 type ErrorField struct {

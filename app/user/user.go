@@ -35,6 +35,6 @@ var ErrUsernameAlreadyExists = errors.New("username already exists")
 
 func New(userStorage UserStorage) UserHandler {
 	service := NewUserService(userStorage, utils.NewUtils())
-	handler := NewUserHandler(service)
+	handler := NewUserHandler(service, utils.NewUtils())
 	return handler
 }

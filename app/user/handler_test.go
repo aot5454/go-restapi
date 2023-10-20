@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-restapi/app"
 	"go-restapi/logger"
+	"go-restapi/utils"
 	"net/http/httptest"
 	"testing"
 
@@ -72,6 +73,7 @@ var CreateUserBadReqFailCases = []TestCases{
 }
 
 func TestCreateUserHandler(t *testing.T) {
+	mockUtils := &mockUtils{}
 	serviceSuccess := &mockUserService{}
 	serviceSuccess.On("CreateUser", mock.Anything, mock.Anything).Return(nil)
 
@@ -81,9 +83,9 @@ func TestCreateUserHandler(t *testing.T) {
 	serviceFailBadRequest := &mockUserService{}
 	serviceFailBadRequest.On("CreateUser", mock.Anything, mock.Anything).Return(ErrUsernameAlreadyExists)
 
-	t.Run("Success Case", RunTest(serviceSuccess, CreateUserSuccessCases))
-	t.Run("Fail Case Store", RunTest(serviceFailStore, CreateUserFailCases))
-	t.Run("Fail Case BadRequest", RunTest(serviceFailBadRequest, CreateUserBadReqFailCases))
+	t.Run("Success Case", RunTest(serviceSuccess, mockUtils, CreateUserSuccessCases))
+	t.Run("Fail Case Store", RunTest(serviceFailStore, mockUtils, CreateUserFailCases))
+	t.Run("Fail Case BadRequest", RunTest(serviceFailBadRequest, mockUtils, CreateUserBadReqFailCases))
 
 }
 
@@ -96,7 +98,7 @@ var GetListUserSuccessCasesEmptyData = []TestCases{
 		method:         "GET",
 		reqBody:        ``,
 		expectedStatus: 200,
-		expectedBody:   `{"status":"SUCCESS","message":"","data":[]}`,
+		expectedBody:   `{"status":"SUCCESS","message":"","currentPage":1,"data":[]}`,
 	},
 }
 
@@ -107,7 +109,7 @@ var GetListUserSuccessCases = []TestCases{
 		method:         "GET",
 		reqBody:        ``,
 		expectedStatus: 200,
-		expectedBody:   `{"status":"SUCCESS","message":"","data":[{"id":0,"username":"test","firstname":"test","lastname":"test","status":"Active"}]}`,
+		expectedBody:   `{"status":"SUCCESS","message":"","currentRecord":1,"currentPage":1,"totalRecord":1,"totalPage":1,"data":[{"id":0,"username":"test","firstname":"test","lastname":"test","status":"Active"}]}`,
 	},
 }
 
@@ -122,7 +124,25 @@ var GetListUserFailCases = []TestCases{
 	},
 }
 
+var GetCountListUserFailCases = []TestCases{
+	{
+		name:           "GetCountListUser: Should return error (Service error)",
+		url:            "/users",
+		method:         "GET",
+		reqBody:        ``,
+		expectedStatus: 507,
+		expectedBody:   `{"status":"ERROR","message":"The server encountered an unexpected condition which prevented it from fulfilling the request."}`,
+	},
+}
+
 func TestGetListUserHandler(t *testing.T) {
+	RunGetListUserSuccessCase(t)
+	RunGetListUserSuccessEmptyDataCase(t)
+	RunGetListUserFailCase(t)
+	RunGetListUserFailCaseCountListUser(t)
+}
+
+func RunGetListUserSuccessCase(t *testing.T) {
 	mockData := []GetListUserResponse{
 		{
 			ID:        0,
@@ -132,25 +152,59 @@ func TestGetListUserHandler(t *testing.T) {
 			Status:    "Active",
 		},
 	}
+
+	mockUtils := &mockUtils{}
+	mockUtils.On("GetPage", mock.Anything).Return(1, nil)
+	mockUtils.On("GetPageSize", mock.Anything).Return(10, nil)
+	mockUtils.On("GetTotalPage", mock.Anything, mock.Anything).Return(1)
+
 	serviceSuccess := &mockUserService{}
-	serviceSuccess.On("GetListUser", mock.Anything).Return(mockData, nil)
-	t.Run("Success Case", RunTest(serviceSuccess, GetListUserSuccessCases))
-
-	serviceSuccessEmptyData := &mockUserService{}
-	serviceSuccessEmptyData.On("GetListUser", mock.Anything).Return([]GetListUserResponse{}, nil)
-	t.Run("Success Case Empty data", RunTest(serviceSuccessEmptyData, GetListUserSuccessCasesEmptyData))
-
-	serviceFail := &mockUserService{}
-	serviceFail.On("GetListUser", mock.Anything).Return([]GetListUserResponse{}, errors.New("error"))
-	t.Run("Fail Case", RunTest(serviceFail, GetListUserFailCases))
+	serviceSuccess.On("GetListUser", mock.Anything, mock.Anything, mock.Anything).Return(mockData, nil)
+	serviceSuccess.On("CountListUser", mock.Anything).Return(1, nil)
+	t.Run("Success Case", RunTest(serviceSuccess, mockUtils, GetListUserSuccessCases))
 }
 
-func RunTest(service UserService, testCases []TestCases) func(t *testing.T) {
+func RunGetListUserSuccessEmptyDataCase(t *testing.T) {
+	mockUtils := &mockUtils{}
+	mockUtils.On("GetPage", mock.Anything).Return(1, nil)
+	mockUtils.On("GetPageSize", mock.Anything).Return(10, nil)
+	mockUtils.On("GetTotalPage", mock.Anything, mock.Anything).Return(0)
+
+	serviceSuccessEmptyData := &mockUserService{}
+	serviceSuccessEmptyData.On("GetListUser", mock.Anything, mock.Anything, mock.Anything).Return([]GetListUserResponse{}, nil)
+	serviceSuccessEmptyData.On("CountListUser", mock.Anything).Return(0, nil)
+	t.Run("Success Case Empty data", RunTest(serviceSuccessEmptyData, mockUtils, GetListUserSuccessCasesEmptyData))
+}
+
+func RunGetListUserFailCase(t *testing.T) {
+	mockUtils := &mockUtils{}
+	mockUtils.On("GetPage", mock.Anything).Return(1, nil)
+	mockUtils.On("GetPageSize", mock.Anything).Return(10, nil)
+	mockUtils.On("GetTotalPage", mock.Anything, mock.Anything).Return(0)
+
+	serviceFail := &mockUserService{}
+	serviceFail.On("GetListUser", mock.Anything, mock.Anything, mock.Anything).Return([]GetListUserResponse{}, errors.New("error"))
+	t.Run("Fail Case GetListUser", RunTest(serviceFail, mockUtils, GetListUserFailCases))
+}
+
+func RunGetListUserFailCaseCountListUser(t *testing.T) {
+	mockUtils := &mockUtils{}
+	mockUtils.On("GetPage", mock.Anything).Return(1, nil)
+	mockUtils.On("GetPageSize", mock.Anything).Return(10, nil)
+	mockUtils.On("GetTotalPage", mock.Anything, mock.Anything).Return(0)
+
+	serviceFail := &mockUserService{}
+	serviceFail.On("GetListUser", mock.Anything, mock.Anything, mock.Anything).Return([]GetListUserResponse{}, nil)
+	serviceFail.On("CountListUser", mock.Anything).Return(0, errors.New("error"))
+	t.Run("Fail Case CountListUser", RunTest(serviceFail, mockUtils, GetCountListUserFailCases))
+}
+
+func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func(t *testing.T) {
 	return func(t *testing.T) {
 		gin.SetMode(gin.TestMode)
 		r := gin.Default()
 
-		h := NewUserHandler(service)
+		h := NewUserHandler(service, utils)
 		r.POST("/users", toGinHandlerFunc(h.CreateUser))
 		r.GET("/users", toGinHandlerFunc(h.GetListUser))
 

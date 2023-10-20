@@ -36,6 +36,14 @@ func (m *mockUserStorage) GetListUser() ([]UserModel, error) {
 	return args.Get(0).([]UserModel), args.Error(1)
 }
 
+func (m *mockUserStorage) GetUserByUsername(username string) (*UserModel, error) {
+	args := m.Called(username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*UserModel), args.Error(1)
+}
+
 // ----------------------------
 
 type mockUtils struct {

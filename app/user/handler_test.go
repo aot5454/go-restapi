@@ -35,7 +35,7 @@ var CreateUserSuccessCases = []TestCases{
 
 var CreateUserFailCases = []TestCases{
 	{
-		name:           "CreateUser: Should return error (Bind error))",
+		name:           "CreateUser: Should return error (Bind error)",
 		url:            "/users",
 		method:         "POST",
 		reqBody:        `{"username":"test","password":"test","firstname":"test","lastname":"test"`,
@@ -43,7 +43,7 @@ var CreateUserFailCases = []TestCases{
 		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
 	},
 	{
-		name:           "CreateUser: Should return error (Validate error))",
+		name:           "CreateUser: Should return error (Validate error)",
 		url:            "/users",
 		method:         "POST",
 		reqBody:        `{"username":"test","password":"test","firstname":"test","lastname":"test"}`,
@@ -51,7 +51,7 @@ var CreateUserFailCases = []TestCases{
 		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
 	},
 	{
-		name:           "CreateUser: Should return error (Service error))",
+		name:           "CreateUser: Should return error (Service error)",
 		url:            "/users",
 		method:         "POST",
 		reqBody:        `{"username":"test","password":"password","firstname":"test","lastname":"test"}`,
@@ -60,14 +60,31 @@ var CreateUserFailCases = []TestCases{
 	},
 }
 
+var CreateUserBadReqFailCases = []TestCases{
+	{
+		name:           "CreateUser: Should return error (BadRequest)",
+		url:            "/users",
+		method:         "POST",
+		reqBody:        `{"username":"test","password":"password","firstname":"test","lastname":"test"}`,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+}
+
 func TestCreateUserHandler(t *testing.T) {
 	serviceSuccess := &mockUserService{}
 	serviceSuccess.On("CreateUser", mock.Anything, mock.Anything).Return(nil)
-	serviceFail := &mockUserService{}
-	serviceFail.On("CreateUser", mock.Anything, mock.Anything).Return(errors.New("error"))
+
+	serviceFailStore := &mockUserService{}
+	serviceFailStore.On("CreateUser", mock.Anything, mock.Anything).Return(errors.New("error"))
+
+	serviceFailBadRequest := &mockUserService{}
+	serviceFailBadRequest.On("CreateUser", mock.Anything, mock.Anything).Return(ErrUsernameAlreadyExists)
 
 	t.Run("Success Case", RunTest(serviceSuccess, CreateUserSuccessCases))
-	t.Run("Fail Case", RunTest(serviceFail, CreateUserFailCases))
+	t.Run("Fail Case Store", RunTest(serviceFailStore, CreateUserFailCases))
+	t.Run("Fail Case BadRequest", RunTest(serviceFailBadRequest, CreateUserBadReqFailCases))
+
 }
 
 // ----------------------------

@@ -1,8 +1,11 @@
 package user
 
 import (
+	"errors"
 	"go-restapi/app"
 	"go-restapi/utils"
+
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -23,6 +26,16 @@ func NewUserService(userStorage UserStorage, utils utils.Utils) UserService {
 }
 
 func (s *userService) CreateUser(ctx app.Context, req CreateUserRequest) error {
+
+	checkDup, err := s.userStorage.GetUserByUsername(req.Username)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if checkDup != nil {
+		return ErrUsernameAlreadyExists
+	}
+
 	hashPassword, err := s.utils.HashPassword(req.Password)
 	if err != nil {
 		return err

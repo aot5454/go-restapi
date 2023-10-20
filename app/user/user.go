@@ -1,6 +1,9 @@
 package user
 
-import "go-restapi/utils"
+import (
+	"errors"
+	"go-restapi/utils"
+)
 
 type CreateUserRequest struct {
 	Username  string `json:"username" validate:"required,min=3,max=50"`
@@ -23,10 +26,12 @@ type UserModel struct {
 	ID        int64  `db:"id" gorm:"primaryKey" `
 	Username  string `db:"username" gorm:"unique"`
 	Password  string `db:"password"`
-	FirstName string `db:"firstname"`
-	LastName  string `db:"lastname"`
+	FirstName string `db:"first_name"`
+	LastName  string `db:"last_name"`
 	Status    int    `db:"status" gorm:"default:1"`
 }
+
+var ErrUsernameAlreadyExists = errors.New("username already exists")
 
 func New(userStorage UserStorage) UserHandler {
 	service := NewUserService(userStorage, utils.NewUtils())

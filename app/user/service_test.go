@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 var mockCreateUserRequest = CreateUserRequest{
@@ -52,8 +53,9 @@ var mockUserModel = []UserModel{
 }
 
 func TestCreateUserService(t *testing.T) {
-	t.Run("Should return success", func(t *testing.T) {
+	t.Run("Should return success", func(tc *testing.T) {
 		storage := &mockUserStorage{}
+		storage.On("GetUserByUsername", mock.Anything).Return(nil, gorm.ErrRecordNotFound)
 		storage.On("CreateUser", mock.Anything).Return(nil)
 		utils := &mockUtils{}
 		utils.On("HashPassword", mock.Anything).Return("password", nil)
@@ -61,11 +63,36 @@ func TestCreateUserService(t *testing.T) {
 		service := NewUserService(storage, utils)
 
 		err := service.CreateUser(nil, mockCreateUserRequest)
-		assert.NoError(t, err)
+		assert.NoError(tc, err)
+	})
+
+	t.Run("Should return error (Other error)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByUsername", mock.Anything).Return(nil, errors.New("error"))
+		storage.On("CreateUser", mock.Anything).Return(nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		err := service.CreateUser(nil, mockCreateUserRequest)
+		assert.Error(t, err)
+	})
+
+	t.Run("Should return error (Dup data)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByUsername", mock.Anything).Return(&mockUserModel[0], nil)
+		storage.On("CreateUser", mock.Anything).Return(nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		err := service.CreateUser(nil, mockCreateUserRequest)
+		assert.Error(t, err)
 	})
 
 	t.Run("Should return error (HashPassword)", func(t *testing.T) {
 		storage := &mockUserStorage{}
+		storage.On("GetUserByUsername", mock.Anything).Return(nil, nil)
 		storage.On("CreateUser", mock.Anything).Return(nil)
 		utils := &mockUtils{}
 		utils.On("HashPassword", mock.Anything).Return("", errors.New("error"))

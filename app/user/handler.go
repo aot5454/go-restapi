@@ -31,6 +31,11 @@ func (h *userHandler) CreateUser(ctx app.Context) {
 	}
 
 	if err := h.userSvc.CreateUser(ctx, user); err != nil {
+		if err == ErrUsernameAlreadyExists {
+			ctx.BadRequest(err)
+			return
+		}
+
 		ctx.StoreError(err)
 		return
 	}

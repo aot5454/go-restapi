@@ -30,7 +30,7 @@ var mockUserStorageDataList = []UserModel{
 	},
 }
 
-type testSuite struct {
+type testStorageSuite struct {
 	suite.Suite
 	sqlmockDB *sql.DB
 	mock      sqlmock.Sqlmock
@@ -38,7 +38,7 @@ type testSuite struct {
 	data      UserModel
 }
 
-func (s *testSuite) SetupTest() {
+func (s *testStorageSuite) SetupTest() {
 	sqlmockDB, mock, _ := sqlmock.New()
 
 	mock.ExpectQuery(`SELECT VERSION()`).WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow("7.2"))
@@ -51,7 +51,7 @@ func (s *testSuite) SetupTest() {
 	s.data = mockUserStorageData
 }
 
-func (s *testSuite) TestCreateUserStorage() {
+func (s *testStorageSuite) TestCreateUserStorage() {
 	s.Run("Should return nil", func() {
 		s.mock.ExpectBegin()
 		s.mock.ExpectExec("INSERT").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -73,7 +73,7 @@ func (s *testSuite) TestCreateUserStorage() {
 	})
 }
 
-func (s *testSuite) TestGetListUserStorage() {
+func (s *testStorageSuite) TestGetListUserStorage() {
 	s.Run("Should return nil", func() {
 		s.mock.ExpectQuery("SELECT").
 			WillReturnRows(sqlmock.
@@ -95,10 +95,32 @@ func (s *testSuite) TestGetListUserStorage() {
 	})
 }
 
-func (s *testSuite) TearDownTest() {
+func (s *testStorageSuite) TestGetUserByUsername() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
+				AddRow(1, "test", "password", "test", "test", 1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.GetUserByUsername("test")
+		s.NoError(err)
+		s.EqualValues(mockUserStorageData, *got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.GetUserByUsername("test")
+		s.Error(err)
+	})
+}
+
+func (s *testStorageSuite) TearDownTest() {
 	s.sqlmockDB.Close()
 }
 
-func TestCreateUserStorage(t *testing.T) {
-	suite.Run(t, new(testSuite))
+func TestUserStorage(t *testing.T) {
+	suite.Run(t, new(testStorageSuite))
 }

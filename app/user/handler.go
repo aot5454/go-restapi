@@ -49,8 +49,8 @@ func (h *userHandler) CreateUser(ctx app.Context) {
 }
 
 func (h *userHandler) GetListUser(ctx app.Context) {
-	page, err := h.utils.GetPage(ctx)
-	pageSize, err := h.utils.GetPageSize(ctx)
+	page, _ := h.utils.GetPage(ctx)
+	pageSize, _ := h.utils.GetPageSize(ctx)
 
 	users, err := h.userSvc.GetListUser(ctx, page, pageSize)
 	if err != nil {

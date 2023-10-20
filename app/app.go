@@ -19,7 +19,7 @@ type Response struct {
 	Status  status `json:"status"`
 	Message string `json:"message"`
 	Paging
-	Data    any    `json:"data,omitempty"`
+	Data any `json:"data,omitempty"`
 }
 
 type Paging struct {

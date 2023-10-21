@@ -30,7 +30,7 @@ var mockUserStorageDataList = []UserModel{
 	},
 }
 
-type testSuite struct {
+type testStorageSuite struct {
 	suite.Suite
 	sqlmockDB *sql.DB
 	mock      sqlmock.Sqlmock
@@ -38,7 +38,7 @@ type testSuite struct {
 	data      UserModel
 }
 
-func (s *testSuite) SetupTest() {
+func (s *testStorageSuite) SetupTest() {
 	sqlmockDB, mock, _ := sqlmock.New()
 
 	mock.ExpectQuery(`SELECT VERSION()`).WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow("7.2"))
@@ -51,7 +51,11 @@ func (s *testSuite) SetupTest() {
 	s.data = mockUserStorageData
 }
 
-func (s *testSuite) TestCreateUserStorage() {
+func (s *testStorageSuite) TearDownTest() {
+	s.sqlmockDB.Close()
+}
+
+func (s *testStorageSuite) TestCreateUserStorage() {
 	s.Run("Should return nil", func() {
 		s.mock.ExpectBegin()
 		s.mock.ExpectExec("INSERT").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -73,7 +77,7 @@ func (s *testSuite) TestCreateUserStorage() {
 	})
 }
 
-func (s *testSuite) TestGetListUserStorage() {
+func (s *testStorageSuite) TestGetListUserStorage() {
 	s.Run("Should return nil", func() {
 		s.mock.ExpectQuery("SELECT").
 			WillReturnRows(sqlmock.
@@ -81,7 +85,7 @@ func (s *testSuite) TestGetListUserStorage() {
 				AddRow(1, "test", "password", "test", "test", 1))
 
 		storage := NewUserStorage(s.gormDB)
-		got, err := storage.GetListUser()
+		got, err := storage.GetListUser(1, 10)
 		s.NoError(err)
 		s.EqualValues(mockUserStorageDataList, got)
 	})
@@ -90,15 +94,99 @@ func (s *testSuite) TestGetListUserStorage() {
 		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
 
 		storage := NewUserStorage(s.gormDB)
-		_, err := storage.GetListUser()
+		_, err := storage.GetListUser(1, 10)
 		s.Error(err)
 	})
 }
 
-func (s *testSuite) TearDownTest() {
-	s.sqlmockDB.Close()
+func (s *testStorageSuite) TestCountListUserStorage() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"count"}).
+				AddRow(1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.CountListUser()
+		s.NoError(err)
+		s.EqualValues(1, got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.CountListUser()
+		s.Error(err)
+	})
 }
 
-func TestCreateUserStorage(t *testing.T) {
-	suite.Run(t, new(testSuite))
+func (s *testStorageSuite) TestGetUserByUsername() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
+				AddRow(1, "test", "password", "test", "test", 1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.GetUserByUsername("test")
+		s.NoError(err)
+		s.EqualValues(mockUserStorageData, *got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.GetUserByUsername("test")
+		s.Error(err)
+	})
+}
+
+func (s *testStorageSuite) TestGetUserByID() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectQuery("SELECT").
+			WillReturnRows(sqlmock.
+				NewRows([]string{"id", "username", "password", "first_name", "last_name", "status"}).
+				AddRow(1, "test", "password", "test", "test", 1))
+
+		storage := NewUserStorage(s.gormDB)
+		got, err := storage.GetUserByID(1)
+		s.NoError(err)
+		s.EqualValues(mockUserStorageData, *got)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectQuery("SELECT").WillReturnError(sql.ErrConnDone)
+
+		storage := NewUserStorage(s.gormDB)
+		_, err := storage.GetUserByID(1)
+		s.Error(err)
+	})
+}
+
+func (s *testStorageSuite) TestUpdateUser() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectBegin()
+		s.mock.ExpectExec("UPDATE").WillReturnResult(sqlmock.NewResult(1, 1))
+		s.mock.ExpectCommit()
+
+		storage := NewUserStorage(s.gormDB)
+		err := storage.UpdateUser(s.data)
+		s.NoError(err)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectBegin()
+		s.mock.ExpectExec("UPDATE").WillReturnError(sql.ErrConnDone)
+		s.mock.ExpectCommit()
+
+		storage := NewUserStorage(s.gormDB)
+		err := storage.UpdateUser(s.data)
+		s.Error(err)
+	})
+}
+
+func TestUserStorage(t *testing.T) {
+	suite.Run(t, new(testStorageSuite))
 }

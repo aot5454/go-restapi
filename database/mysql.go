@@ -3,13 +3,14 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"go-restapi/app"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-func NewMysqlDB(username, password, host, port, database string) (*gorm.DB, error) {
-	dns := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, database)
+func NewMysqlDB(conf app.Config) (*gorm.DB, error) {
+	dns := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", conf.Database.Username, conf.Database.Password, conf.Database.Host, conf.Database.Port, conf.Database.Database)
 	sqlDB, err := sql.Open("mysql", dns)
 	if err != nil {
 		return nil, err

@@ -15,9 +15,27 @@ func (m *mockUserService) CreateUser(ctx app.Context, req CreateUserRequest) err
 	return args.Error(0)
 }
 
-func (m *mockUserService) GetListUser(ctx app.Context) ([]GetListUserResponse, error) {
-	args := m.Called(ctx)
+func (m *mockUserService) GetListUser(ctx app.Context, page, pageSize int) ([]GetListUserResponse, error) {
+	args := m.Called(ctx, page, pageSize)
 	return args.Get(0).([]GetListUserResponse), args.Error(1)
+}
+
+func (m *mockUserService) CountListUser(ctx app.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *mockUserService) GetUserByID(ctx app.Context, id int) (*GetUserResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*GetUserResponse), args.Error(1)
+}
+
+func (m *mockUserService) UpdateUser(ctx app.Context, id int, req UpdateUserRequest) error {
+	args := m.Called(ctx, id, req)
+	return args.Error(0)
 }
 
 // ----------------------------
@@ -31,9 +49,35 @@ func (m *mockUserStorage) CreateUser(model UserModel) error {
 	return args.Error(0)
 }
 
-func (m *mockUserStorage) GetListUser() ([]UserModel, error) {
-	args := m.Called()
+func (m *mockUserStorage) GetListUser(page, pageSize int) ([]UserModel, error) {
+	args := m.Called(page, pageSize)
 	return args.Get(0).([]UserModel), args.Error(1)
+}
+
+func (m *mockUserStorage) GetUserByUsername(username string) (*UserModel, error) {
+	args := m.Called(username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*UserModel), args.Error(1)
+}
+
+func (m *mockUserStorage) GetUserByID(id int) (*UserModel, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*UserModel), args.Error(1)
+}
+
+func (m *mockUserStorage) CountListUser() (int64, error) {
+	args := m.Called()
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *mockUserStorage) UpdateUser(model UserModel) error {
+	args := m.Called(model)
+	return args.Error(0)
 }
 
 // ----------------------------
@@ -50,4 +94,19 @@ func (m *mockUtils) HashPassword(password string) (string, error) {
 func (m *mockUtils) CheckPasswordHash(password, hash string) bool {
 	args := m.Called(password, hash)
 	return args.Bool(0)
+}
+
+func (m *mockUtils) GetPage(ctx app.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *mockUtils) GetPageSize(ctx app.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *mockUtils) GetTotalPage(total, pageSize int) int {
+	args := m.Called(total, pageSize)
+	return args.Int(0)
 }

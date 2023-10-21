@@ -28,6 +28,12 @@ type GetUserResponse struct {
 	Status    string `json:"status"`
 }
 
+type UpdateUserRequest struct {
+	FirstName string `json:"firstname" validate:"required,min=3,max=50"`
+	LastName  string `json:"lastname" validate:"required,min=3,max=50"`
+	Status    string `json:"status" validate:"required,oneof=active inactive"`
+}
+
 const UserTableName = "users"
 
 type UserModel struct {

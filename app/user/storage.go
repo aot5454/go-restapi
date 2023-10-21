@@ -8,6 +8,7 @@ type UserStorage interface {
 	GetUserByUsername(string) (*UserModel, error)
 	GetUserByID(int) (*UserModel, error)
 	CountListUser() (int64, error)
+	UpdateUser(UserModel) error
 }
 
 type userStorage struct {
@@ -60,4 +61,12 @@ func (s *userStorage) GetUserByID(id int) (*UserModel, error) {
 		return nil, q.Error
 	}
 	return &user, nil
+}
+
+func (s *userStorage) UpdateUser(user UserModel) error {
+	q := s.db.Table(UserTableName).Save(&user)
+	if q.Error != nil {
+		return q.Error
+	}
+	return nil
 }

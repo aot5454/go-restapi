@@ -277,6 +277,84 @@ func RunGetUserByIDHandlerNotFoundCase(t *testing.T) {
 	t.Run("Fail Case Not found", RunTest(serviceFail, mockUtils, GetUserByIDNotFoundCases))
 }
 
+// ----------------------------
+
+var UpdateUserSuccessCases = []TestCases{
+	{
+		name:           "UpdateUser: Should return success message",
+		url:            "/users/0",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"active"}`,
+		expectedStatus: 200,
+		expectedBody:   `{"status":"SUCCESS","message":""}`,
+	},
+}
+
+var UpdateUserNotFoundFailCases = []TestCases{
+	{
+		name:           "UpdateUser: Should return error (ID invalid)",
+		url:            "/users/abc",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"active"}`,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+	{
+		name:           "UpdateUser: Should return error (Bind error)",
+		url:            "/users/0",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"active"`,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+	{
+		name:           "UpdateUser: Should return error (Validate error)",
+		url:            "/users/0",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"x"}`,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+	{
+		name:           "UpdateUser: Should return error (Service error)",
+		url:            "/users/0",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"active"}`,
+		expectedStatus: 404,
+		expectedBody:   `{"status":"ERROR","message":"The requested resource could not be found but may be available in the future."}`,
+	},
+}
+
+var UpdateUserFailCases = []TestCases{
+	{
+		name:           "UpdateUser: Should return error (Service error)",
+		url:            "/users/0",
+		method:         "PUT",
+		reqBody:        `{"firstname":"test","lastname":"test","status":"active"}`,
+		expectedStatus: 507,
+		expectedBody:   `{"status":"ERROR","message":"The server encountered an unexpected condition which prevented it from fulfilling the request."}`,
+	},
+}
+
+func TestUpdateUserHandler(t *testing.T) {
+	mockUtils := &mockUtils{}
+	serviceSuccess := &mockUserService{}
+	serviceSuccess.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	serviceFailBadRequest := &mockUserService{}
+	serviceFailBadRequest.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(ErrUserNotFound)
+
+	serviceFailStore := &mockUserService{}
+	serviceFailStore.On("UpdateUser", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("error"))
+
+	t.Run("Success Case", RunTest(serviceSuccess, mockUtils, UpdateUserSuccessCases))
+	t.Run("Fail Case BadRequest", RunTest(serviceFailBadRequest, mockUtils, UpdateUserNotFoundFailCases))
+	t.Run("Fail Case Store", RunTest(serviceFailStore, mockUtils, UpdateUserFailCases))
+
+}
+
+// ----------------------------
+
 func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func(t *testing.T) {
 	return func(t *testing.T) {
 		gin.SetMode(gin.TestMode)
@@ -286,6 +364,7 @@ func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func
 		r.POST("/users", toGinHandlerFunc(h.CreateUser))
 		r.GET("/users", toGinHandlerFunc(h.GetListUser))
 		r.GET("/users/:id", toGinHandlerFunc(h.GetUserByID))
+		r.PUT("/users/:id", toGinHandlerFunc(h.UpdateUser))
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {

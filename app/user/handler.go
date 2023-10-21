@@ -10,6 +10,7 @@ type UserHandler interface {
 	CreateUser(ctx app.Context)
 	GetListUser(ctx app.Context)
 	GetUserByID(ctx app.Context)
+	UpdateUser(ctx app.Context)
 }
 
 type userHandler struct {
@@ -95,4 +96,37 @@ func (h *userHandler) GetUserByID(ctx app.Context) {
 	}
 
 	ctx.OK(user)
+}
+
+func (h *userHandler) UpdateUser(ctx app.Context) {
+	paramId := ctx.GetParam("id")
+	id, err := strconv.Atoi(paramId)
+	if err != nil {
+		ctx.BadRequest(err)
+		return
+	}
+
+	var user = UpdateUserRequest{}
+
+	if err := ctx.Bind(&user); err != nil {
+		ctx.BadRequest(err)
+		return
+	}
+
+	if _, err := ctx.Validate(&user); err != nil {
+		ctx.BadRequest(err)
+		return
+	}
+
+	if err := h.userSvc.UpdateUser(ctx, id, user); err != nil {
+		if err == ErrUserNotFound {
+			ctx.NotFound()
+			return
+		}
+
+		ctx.StoreError(err)
+		return
+	}
+
+	ctx.OK(nil)
 }

@@ -33,6 +33,11 @@ func (m *mockUserService) GetUserByID(ctx app.Context, id int) (*GetUserResponse
 	return args.Get(0).(*GetUserResponse), args.Error(1)
 }
 
+func (m *mockUserService) UpdateUser(ctx app.Context, id int, req UpdateUserRequest) error {
+	args := m.Called(ctx, id, req)
+	return args.Error(0)
+}
+
 // ----------------------------
 
 type mockUserStorage struct {
@@ -68,6 +73,11 @@ func (m *mockUserStorage) GetUserByID(id int) (*UserModel, error) {
 func (m *mockUserStorage) CountListUser() (int64, error) {
 	args := m.Called()
 	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *mockUserStorage) UpdateUser(model UserModel) error {
+	args := m.Called(model)
+	return args.Error(0)
 }
 
 // ----------------------------

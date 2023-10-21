@@ -218,3 +218,61 @@ func TestGetUserByIDService(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestUpdateUserService(t *testing.T) {
+	t.Run("Should return success (Active)", func(t *testing.T) {
+		dataUpdate := UpdateUserRequest{
+			FirstName: "test",
+			LastName:  "test",
+			Status:    "active",
+		}
+		utils := &mockUtils{}
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], nil)
+		storage.On("UpdateUser", mock.Anything).Return(nil)
+
+		service := NewUserService(storage, utils)
+
+		err := service.UpdateUser(nil, 1, dataUpdate)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should return success (Inactive)", func(t *testing.T) {
+		dataUpdate := UpdateUserRequest{
+			FirstName: "test",
+			LastName:  "test",
+			Status:    "inactive",
+		}
+		utils := &mockUtils{}
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], nil)
+		storage.On("UpdateUser", mock.Anything).Return(nil)
+
+		service := NewUserService(storage, utils)
+
+		err := service.UpdateUser(nil, 1, dataUpdate)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should return error (Not found)", func(t *testing.T) {
+		utils := &mockUtils{}
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(nil, gorm.ErrRecordNotFound)
+
+		service := NewUserService(storage, utils)
+
+		err := service.UpdateUser(nil, 1, UpdateUserRequest{})
+		assert.Error(t, err)
+	})
+
+	t.Run("Should return error (Other error)", func(t *testing.T) {
+		utils := &mockUtils{}
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(nil, errors.New("error"))
+
+		service := NewUserService(storage, utils)
+
+		err := service.UpdateUser(nil, 1, UpdateUserRequest{})
+		assert.Error(t, err)
+	})
+}

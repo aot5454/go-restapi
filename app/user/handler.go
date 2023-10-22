@@ -11,6 +11,7 @@ type UserHandler interface {
 	GetListUser(ctx app.Context)
 	GetUserByID(ctx app.Context)
 	UpdateUser(ctx app.Context)
+	DeleteUser(ctx app.Context)
 }
 
 type userHandler struct {
@@ -119,6 +120,27 @@ func (h *userHandler) UpdateUser(ctx app.Context) {
 	}
 
 	if err := h.userSvc.UpdateUser(ctx, id, user); err != nil {
+		if err == ErrUserNotFound {
+			ctx.NotFound()
+			return
+		}
+
+		ctx.StoreError(err)
+		return
+	}
+
+	ctx.OK(nil)
+}
+
+func (h *userHandler) DeleteUser(ctx app.Context) {
+	paramId := ctx.GetParam("id")
+	id, err := strconv.Atoi(paramId)
+	if err != nil {
+		ctx.BadRequest(err)
+		return
+	}
+
+	if err := h.userSvc.DeleteUser(ctx, id); err != nil {
 		if err == ErrUserNotFound {
 			ctx.NotFound()
 			return

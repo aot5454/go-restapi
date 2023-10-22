@@ -355,6 +355,65 @@ func TestUpdateUserHandler(t *testing.T) {
 
 // ----------------------------
 
+var DeleteUserSuccessCases = []TestCases{
+	{
+		name:           "DeleteUser: Should return success message",
+		url:            "/users/0",
+		method:         "DELETE",
+		reqBody:        ``,
+		expectedStatus: 200,
+		expectedBody:   `{"status":"SUCCESS","message":""}`,
+	},
+}
+
+var DeleteUserFailCases = []TestCases{
+	{
+		name:           "DeleteUser: Should return error (ID invalid)",
+		url:            "/users/abc",
+		method:         "DELETE",
+		reqBody:        ``,
+		expectedStatus: 400,
+		expectedBody:   `{"status":"ERROR","message":"Invalid request body, Please check your request body and try again!"}`,
+	},
+	{
+		name:           "DeleteUser: Should return error (Service error)",
+		url:            "/users/0",
+		method:         "DELETE",
+		reqBody:        ``,
+		expectedStatus: 507,
+		expectedBody:   `{"status":"ERROR","message":"The server encountered an unexpected condition which prevented it from fulfilling the request."}`,
+	},
+}
+
+var DeleteUserNotFoundFailCases = []TestCases{
+	{
+		name:           "DeleteUser: Should return error (Service error Not found)",
+		url:            "/users/0",
+		method:         "DELETE",
+		reqBody:        ``,
+		expectedStatus: 404,
+		expectedBody:   `{"status":"ERROR","message":"The requested resource could not be found but may be available in the future."}`,
+	},
+}
+
+func TestDeleteUserHandler(t *testing.T) {
+	mockUtils := &mockUtils{}
+	serviceSuccess := &mockUserService{}
+	serviceSuccess.On("DeleteUser", mock.Anything, mock.Anything).Return(nil)
+
+	serviceFail := &mockUserService{}
+	serviceFail.On("DeleteUser", mock.Anything, mock.Anything).Return(errors.New("error"))
+
+	serviceNotFound := &mockUserService{}
+	serviceNotFound.On("DeleteUser", mock.Anything, mock.Anything).Return(ErrUserNotFound)
+
+	t.Run("Success Case", RunTest(serviceSuccess, mockUtils, DeleteUserSuccessCases))
+	t.Run("Fail Case", RunTest(serviceFail, mockUtils, DeleteUserFailCases))
+	t.Run("Fail Case Not found", RunTest(serviceNotFound, mockUtils, DeleteUserNotFoundFailCases))
+}
+
+// ----------------------------
+
 func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func(t *testing.T) {
 	return func(t *testing.T) {
 		gin.SetMode(gin.TestMode)
@@ -365,6 +424,7 @@ func RunTest(service UserService, utils utils.Utils, testCases []TestCases) func
 		r.GET("/users", toGinHandlerFunc(h.GetListUser))
 		r.GET("/users/:id", toGinHandlerFunc(h.GetUserByID))
 		r.PUT("/users/:id", toGinHandlerFunc(h.UpdateUser))
+		r.DELETE("/users/:id", toGinHandlerFunc(h.DeleteUser))
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {

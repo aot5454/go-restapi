@@ -24,6 +24,7 @@ func Router(r *app.Router, db *gorm.DB) *app.Router {
 		v1.GET("/users", userHandler.GetListUser)
 		v1.GET("/users/:id", userHandler.GetUserByID)
 		v1.PUT("/users/:id", userHandler.UpdateUser)
+		v1.DELETE("/users/:id", userHandler.DeleteUser)
 	}
 
 	r.NoRoute()

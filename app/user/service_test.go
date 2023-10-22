@@ -276,3 +276,39 @@ func TestUpdateUserService(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestDeleteUserService(t *testing.T) {
+	t.Run("Should return success", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(&mockUserModel[0], nil)
+		storage.On("DeleteUser", mock.Anything).Return(nil)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		err := service.DeleteUser(nil, 1)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should return error (Not found)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(nil, gorm.ErrRecordNotFound)
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		err := service.DeleteUser(nil, 1)
+		assert.Error(t, err)
+	})
+
+	t.Run("Should return error (Other error)", func(t *testing.T) {
+		storage := &mockUserStorage{}
+		storage.On("GetUserByID", mock.Anything).Return(nil, errors.New("error"))
+		utils := &mockUtils{}
+
+		service := NewUserService(storage, utils)
+
+		err := service.DeleteUser(nil, 1)
+		assert.Error(t, err)
+	})
+}

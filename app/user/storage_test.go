@@ -187,6 +187,28 @@ func (s *testStorageSuite) TestUpdateUser() {
 	})
 }
 
+func (s *testStorageSuite) TestDeleteUser() {
+	s.Run("Should return nil", func() {
+		s.mock.ExpectBegin()
+		s.mock.ExpectExec("DELETE").WillReturnResult(sqlmock.NewResult(1, 1))
+		s.mock.ExpectCommit()
+
+		storage := NewUserStorage(s.gormDB)
+		err := storage.DeleteUser(1)
+		s.NoError(err)
+	})
+
+	s.Run("Should return error", func() {
+		s.mock.ExpectBegin()
+		s.mock.ExpectExec("DELETE").WillReturnError(sql.ErrConnDone)
+		s.mock.ExpectCommit()
+
+		storage := NewUserStorage(s.gormDB)
+		err := storage.DeleteUser(1)
+		s.Error(err)
+	})
+}
+
 func TestUserStorage(t *testing.T) {
 	suite.Run(t, new(testStorageSuite))
 }

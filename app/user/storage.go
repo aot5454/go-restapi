@@ -9,6 +9,7 @@ type UserStorage interface {
 	GetUserByID(int) (*UserModel, error)
 	CountListUser() (int64, error)
 	UpdateUser(UserModel) error
+	DeleteUser(int) error
 }
 
 type userStorage struct {
@@ -65,6 +66,14 @@ func (s *userStorage) GetUserByID(id int) (*UserModel, error) {
 
 func (s *userStorage) UpdateUser(user UserModel) error {
 	q := s.db.Table(UserTableName).Save(&user)
+	if q.Error != nil {
+		return q.Error
+	}
+	return nil
+}
+
+func (s *userStorage) DeleteUser(id int) error {
+	q := s.db.Table(UserTableName).Where("id = ?", id).Delete(&UserModel{})
 	if q.Error != nil {
 		return q.Error
 	}

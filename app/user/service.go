@@ -14,6 +14,7 @@ type UserService interface {
 	GetUserByID(app.Context, int) (*GetUserResponse, error)
 	CountListUser(app.Context) (int, error)
 	UpdateUser(app.Context, int, UpdateUserRequest) error
+	DeleteUser(app.Context, int) error
 }
 
 type userService struct {
@@ -127,4 +128,16 @@ func (s *userService) UpdateUser(ctx app.Context, id int, req UpdateUserRequest)
 		user.Status = 0
 	}
 	return s.userStorage.UpdateUser(*user)
+}
+
+func (s *userService) DeleteUser(ctx app.Context, id int) error {
+	_, err := s.userStorage.GetUserByID(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrUserNotFound
+	}
+	if err != nil {
+		return err
+	}
+
+	return s.userStorage.DeleteUser(id)
 }

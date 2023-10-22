@@ -41,6 +41,14 @@ func (err *Error) Error() string {
 	return err.Message
 }
 
+type TokenData struct {
+	UserID    int    `json:"userId"`
+	Username  string `json:"username"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Role      string `json:"role"`
+}
+
 type Config struct {
 	Env      string   `mapstructure:"env"`
 	Server   Server   `mapstructure:"server"`

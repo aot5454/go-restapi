@@ -2,6 +2,7 @@ package user
 
 import (
 	"go-restapi/app"
+	"go-restapi/utils"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -94,6 +95,7 @@ func (m *mockUserStorage) DeleteUser(id int) error {
 
 type mockUtils struct {
 	mock.Mock
+	utils.Utils
 }
 
 func (m *mockUtils) HashPassword(password string) (string, error) {

@@ -1,6 +1,9 @@
 package utils
 
-import "go-restapi/app"
+import (
+	"crypto/rsa"
+	"go-restapi/app"
+)
 
 type Utils interface {
 	HashPassword(password string) (string, error)
@@ -8,6 +11,9 @@ type Utils interface {
 	GetPage(ctx app.Context) (int, error)
 	GetPageSize(ctx app.Context) (int, error)
 	GetTotalPage(total, pageSize int) int
+	GetAccessToken(key *rsa.PrivateKey, data app.TokenData, expireHour int) (string, int64, error)
+	GetPrivateKey() (*rsa.PrivateKey, error)
+	GetUUID() string
 }
 
 type utils struct{}
